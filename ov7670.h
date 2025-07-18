@@ -1,11 +1,11 @@
-#ifndef OV2640_H
-#define OV2640_H
+#ifndef OV7670_H
+#define OV7670_H
 #include <stdint.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 #include "hardware/pio.h"
 
-struct ov2640_config {
+struct ov7670_config {
 	i2c_inst_t *sccb;
 	uint pin_sioc;
 	uint pin_siod;
@@ -24,12 +24,12 @@ struct ov2640_config {
 	size_t image_buf_size;
 };
 
-void ov2640_init(struct ov2640_config *config);
+void ov7670_init(struct ov7670_config *config);
 
-void ov2640_capture_frame(struct ov2640_config *config);
+void ov7670_capture_frame(struct ov7670_config *config);
 
-void ov2640_reg_write(struct ov2640_config *config, uint8_t reg, uint8_t value);
-uint8_t ov2640_reg_read(struct ov2640_config *config, uint8_t reg);
-void ov2640_regs_write(struct ov2640_config *config, const uint8_t (*regs_list)[2]);
+void ov7670_reg_write(struct ov7670_config *config, uint8_t reg, uint8_t value);
+uint8_t ov7670_reg_read(struct ov7670_config *config, uint8_t reg);
+void ov7670_regs_write(struct ov7670_config *config, const uint8_t (*regs_list)[2]);
 
 #endif

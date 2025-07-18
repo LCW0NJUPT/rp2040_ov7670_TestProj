@@ -7,9 +7,9 @@
 #include "image.pio.h"
 #include <stdio.h>
 
-static const uint8_t OV2640_ADDR = 0x42 >> 1;
+static const uint8_t OV7670_ADDR = 0x42 >> 1;
 
-void ov2640_init(struct ov2640_config *config) {
+void ov7670_init(struct ov7670_config *config) {
 	// XCLK generation (~20.83 MHz)
 	gpio_set_function(config->pin_xclk, GPIO_FUNC_PWM);
 	uint slice_num = pwm_gpio_to_slice_num(config->pin_xclk);
@@ -39,12 +39,12 @@ void ov2640_init(struct ov2640_config *config) {
 	sleep_ms(100);
 	printf("Reset camera via reset pin.\n");
 
-	// ov2640_regs_write(config, OV7670_init);//regsDefault
-	// ov2640_regs_write(config, regsRGB565);
-	// ov2640_regs_write(config, regsQQVGA);
-	// ov2640_regs_write(config, setDisablePixelClockDuringBlankLines);
-	// ov2640_regs_write(config, setDisableHREFDuringBlankLines);
-	ov2640_regs_write(config, OV7670_Reg1);//OV_reg
+	// ov7670_regs_write(config, OV7670_init);//regsDefault
+	// ov7670_regs_write(config, regsRGB565);
+	// ov7670_regs_write(config, regsQQVGA);
+	// ov7670_regs_write(config, setDisablePixelClockDuringBlankLines);
+	// ov7670_regs_write(config, setDisableHREFDuringBlankLines);
+	ov7670_regs_write(config, OV7670_Reg1);//OV_reg
 
 	
 	printf("Initialise the camera itself over SCCB.\n");
@@ -55,7 +55,7 @@ void ov2640_init(struct ov2640_config *config) {
 	printf("Enable image RX PIO.\n");
 }
 
-void ov2640_capture_frame(struct ov2640_config *config) {
+void ov7670_capture_frame(struct ov7670_config *config) {
 	dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
 	channel_config_set_read_increment(&c, false);
 	channel_config_set_write_increment(&c, true);
@@ -82,21 +82,21 @@ void ov2640_capture_frame(struct ov2640_config *config) {
 	dma_channel_wait_for_finish_blocking(config->dma_channel);
 }
 
-void ov2640_reg_write(struct ov2640_config *config, uint8_t reg, uint8_t value) {
+void ov7670_reg_write(struct ov7670_config *config, uint8_t reg, uint8_t value) {
 	uint8_t data[] = {reg, value};
-	i2c_write_blocking(config->sccb, OV2640_ADDR, data, sizeof(data), false);
+	i2c_write_blocking(config->sccb, OV7670_ADDR, data, sizeof(data), false);
 }
 
-uint8_t ov2640_reg_read(struct ov2640_config *config, uint8_t reg) {
-	i2c_write_blocking(config->sccb, OV2640_ADDR, &reg, 1, false);
+uint8_t ov7670_reg_read(struct ov7670_config *config, uint8_t reg) {
+	i2c_write_blocking(config->sccb, OV7670_ADDR, &reg, 1, false);
 
 	uint8_t value;
-	i2c_read_blocking(config->sccb, OV2640_ADDR, &value, 1, false);
+	i2c_read_blocking(config->sccb, OV7670_ADDR, &value, 1, false);
 
 	return value;
 }
 
-void ov2640_regs_write(struct ov2640_config *config, const uint8_t (*regs_list)[2]) {
+void ov7670_regs_write(struct ov7670_config *config, const uint8_t (*regs_list)[2]) {
 	uint16_t count=0;
 	printf("ov7670 regs write. \n");
 	while (1) {
@@ -109,7 +109,7 @@ void ov2640_regs_write(struct ov2640_config *config, const uint8_t (*regs_list)[
 		if (reg == 0x00 && value == 0x00) {
 			break;
 		}
-		ov2640_reg_write(config, reg, value);
+		ov7670_reg_write(config, reg, value);
 
 		regs_list++;
 		count++;

@@ -28,7 +28,7 @@ int main() {
 	gpio_init(PIN_LED);
 	gpio_set_dir(PIN_LED, GPIO_OUT);
 	printf("PIN_LED init.\n");
-	struct ov2640_config config;
+	struct ov7670_config config;
 	config.sccb = i2c0;
 	config.pin_sioc = PIN_CAM_SIOC;
 	config.pin_siod = PIN_CAM_SIOD;
@@ -46,10 +46,10 @@ int main() {
 	config.image_buf_size = sizeof(image_buf);
 	printf("config.\n");
 
-	ov2640_init(&config);
+	ov7670_init(&config);
 	printf("OV7670_init.\n");
-	uint8_t midh = ov2640_reg_read(&config, 0x1C);
-	uint8_t midl = ov2640_reg_read(&config, 0x1D);
+	uint8_t midh = ov7670_reg_read(&config, 0x1C);
+	uint8_t midl = ov7670_reg_read(&config, 0x1D);
 	printf("MIDH = 0x%02x, MIDL = 0x%02x\n", midh, midl);
 
 	while (true) {
@@ -65,16 +65,16 @@ int main() {
 			uint8_t value;
 			uart_read_blocking(uart0, &value, 1);
 
-			ov2640_reg_write(&config, reg, value);
+			ov7670_reg_write(&config, reg, value);
 		} else if (cmd == CMD_REG_READ) {
 			uint8_t reg;
 			uart_read_blocking(uart0, &reg, 1);
 
-			uint8_t value = ov2640_reg_read(&config, reg);
+			uint8_t value = ov7670_reg_read(&config, reg);
 
 			uart_write_blocking(uart0, &value, 1);
 		} else if (cmd == CMD_CAPTURE) {
-			ov2640_capture_frame(&config);
+			ov7670_capture_frame(&config);
 			uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
 		}
 	}

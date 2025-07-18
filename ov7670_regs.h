@@ -1,7 +1,7 @@
 #ifndef OV7670_REGS_H
 #define OV7670_REGS_H
 
-#define OV7670_ADDR 0x21 //< Default I2C address if unspecified
+// #define OV7670_ADDR 0x21 //< Default I2C address if unspecified
 
 #define OV7670_REG_GAIN 0x00               //< AGC gain bits 7:0 (9:8 in VREF)
 #define OV7670_REG_BLUE 0x01               //< AWB blue channel gain
