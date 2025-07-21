@@ -41,17 +41,16 @@ target_link_libraries(rp2040_ov7670_TestProj
 	hardware_pwm
 )
 
-```
-作用：禁用 USB 作为标准输入/输出（stdio）的通信接口。
-参数 0：表示禁用 USB 的 stdio 功能。
-典型场景：
-当不需要通过 USB 输出调试信息（如 printf/log）时禁用，可以节省代码空间和资源。
-```
+
+#作用：禁用 USB 作为标准输入/输出（stdio）的通信接口。
+#参数 0：表示禁用 USB 的 stdio 功能。
+#典型场景：
+#当不需要通过 USB 输出调试信息（如 printf/log）时禁用，可以节省代码空间和资源。
+
 pico_enable_stdio_usb(rp2040_ov7670_TestProj 0)
-```
-作用：启用 UART（串口）作为标准输入/输出的通信接口。
-参数 1：表示启用 UART 的 stdio 功能。
-```
+
+#作用：启用 UART（串口）作为标准输入/输出的通信接口。
+#参数 1：表示启用 UART 的 stdio 功能。
 pico_enable_stdio_uart(rp2040_ov7670_TestProj 1)
 
 pico_add_extra_outputs(rp2040_ov7670_TestProj)
