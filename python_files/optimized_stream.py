@@ -8,18 +8,25 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.font_manager as fm
+import platform
 
-# ===== macOS 字体配置 =====
-# pingfang_path = '/Library/Fonts/仿宋_GB2312.ttf'
+#判断如果是win10系统，则使用win10的默认字体
+if sys.platform == 'win32':
+    import ctypes
+    ctypes.windll.shcore.SetProcessDpiAwareness(True)
+    plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
+    plt.rcParams['axes.unicode_minus'] = False
+elif sys.platform == 'darwin':
+    # ===== macOS 字体配置 =====
+    pingfang_path = '/Library/Fonts/仿宋_GB2312.ttf'
+    pingfang_prop = fm.FontProperties(fname=pingfang_path, size=10)
 
-# 创建字体属性对象
-# pingfang_prop = fm.FontProperties(fname=pingfang_path, size=10)
 
 # 设置全局字体配置
-# plt.rcParams['font.family'] = '仿宋_GB2312'
+# plt.rcParams['font.family'] = '/Library/Fonts/仿宋_GB2312.ttf'
 # plt.rcParams['axes.unicode_minus'] = False  # 正常显示减号
-plt.rcParams['font.sans-serif'] = ['SimHei'] # 设置字体为黑体
-plt.rcParams['axes.unicode_minus'] = False # 解决负号显示为方块的问题
+# plt.rcParams['font.sans-serif'] = ['SimHei'] # 设置字体为黑体
+# plt.rcParams['axes.unicode_minus'] = False # 解决负号显示为方块的问题
 # =========================
 
 # 支持的分辨率模式
@@ -108,9 +115,9 @@ def main():
         plt.style.use('dark_background')
         fig, ax = plt.subplots()
         
-        # 使用苹方字体设置标题
-        ax.set_title(f"OV7670 实时视频流 ({args.resolution}) - 按 Ctrl+C 停止"
-                    )
+        # 设置标题（使用跨平台兼容的字体）
+        ax.set_title(f"OV7670 实时视频流 ({args.resolution}) - 按 Ctrl+C 停止", 
+                    fontproperties=pingfang_prop if sys.platform == 'darwin' else None)
         
         # 预先创建空白图像
         initial_img = Image.new('RGB', RESOLUTIONS[args.resolution.lower()])
