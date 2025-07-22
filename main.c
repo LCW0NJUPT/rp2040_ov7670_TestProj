@@ -80,9 +80,17 @@ int main() {
 		} else if (cmd == CMD_STREAM) {
 			while (true) {
 				ov7670_capture_frame(&config);
-				uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
-				// 检查是否有停止命令
-				if (uart_is_readable(uart0)) {
+				// 添加调试输出
+				printf("发送图像数据: %d字节\n", config.image_buf_size);
+				// 分块发送数据(每256字节)
+				uart_tx_wait_blocking(uart0);
+				for(int i=0; i<config.image_buf_size; i+=256) {
+					int chunk_size = (config.image_buf_size-i) > 256 ? 256 : (config.image_buf_size-i);
+					uart_write_blocking(uart0, config.image_buf+i, chunk_size);
+				}
+				
+				// 非阻塞检查停止命令
+				if (uart_is_readable_within_us(uart0, 100)) {
 					uint8_t stop_cmd;
 					uart_read_blocking(uart0, &stop_cmd, 1);
 					if (stop_cmd == 0x00) break;

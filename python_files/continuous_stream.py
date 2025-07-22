@@ -50,21 +50,40 @@ class OV7670ContinuousStream:
         self.ser.write(struct.pack('B', 0x00))  # 停止命令
         
     def get_frame(self):
-        """从流中获取一帧"""
-        raw = bytearray()
+        """高效获取一帧数据"""
         expected_size = self.width * self.height * 2
-        
+        # 确保读取完整帧数据
+        raw = bytearray()
         while len(raw) < expected_size:
             chunk = self.ser.read(expected_size - len(raw))
             if not chunk:
+                print(f"警告: 只收到 {len(raw)}/{expected_size} 字节")
                 return None
             raw.extend(chunk)
         
-        arr = np.frombuffer(raw, dtype=np.uint16).reshape(self.height, self.width)
-        r = self.lut_r[(arr >> 11) & 0x1F]
-        g = self.lut_g[(arr >> 5) & 0x3F]
-        b = self.lut_b[arr & 0x1F]
-        return np.stack([r, g, b], axis=-1)
+        # 调试输出
+        print(f"收到完整帧: {len(raw)}字节 | 首字节: {raw[0]:02x} {raw[1]:02x}...")
+        
+        try:
+            # 将原始数据转换为uint16数组并正确reshape
+            arr = np.frombuffer(raw, dtype=np.uint16).reshape(self.height, self.width).T
+            
+            # 直接向量化处理RGB565转换
+            rgb = np.empty((self.width, self.height, 3), dtype=np.uint8)
+            rgb[..., 0] = self.lut_r[(arr >> 11) & 0x1F]  # R
+            rgb[..., 1] = self.lut_g[(arr >> 5) & 0x3F]    # G
+            rgb[..., 2] = self.lut_b[arr & 0x1F]          # B
+            
+            # 水平翻转解决镜像问题
+            rgb = np.fliplr(rgb)
+            
+            # 旋转90度修正显示方向
+            # rgb = np.rot90(rgb, k=1)
+            
+            return rgb
+        except Exception as e:
+            print(f"图像处理错误: {e}")
+            return None
 
     def close(self):
         self.ser.close()
@@ -94,15 +113,28 @@ def main():
         ax.set_title(f"OV7670 连续视频流 ({args.resolution}) - 按 Ctrl+C 停止",
                     fontproperties=pingfang_prop if sys.platform == 'darwin' else None)
         
-        # 创建初始空白图像
+        # 创建初始空白图像(红色用于调试)
         initial_img = np.zeros((*RESOLUTIONS[args.resolution.lower()], 3), dtype=np.uint8)
+        initial_img[..., 0] = 64  # 红色背景便于调试
         display = ax.imshow(initial_img)
+        plt.draw()  # 强制立即渲染
         
-        # 创建动画
+        # 创建动画并优化性能
         ani = animation.FuncAnimation(
             fig, update_frame, fargs=(display, stream),
-            interval=50, cache_frame_data=False
+            interval=16,  # ~60fps
+            blit=True,
+            cache_frame_data=False
         )
+        # 禁用不必要的图形功能
+        fig.canvas.toolbar = None
+        fig.canvas.header_visible = False
+        fig.canvas.footer_visible = False
+        fig.canvas.resizable = False
+        plt.tight_layout()
+        
+        # 禁用工具栏以提升性能
+        plt.rcParams['toolbar'] = 'None'
         
         plt.show()
         
