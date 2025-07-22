@@ -16,6 +16,7 @@ const int PIN_CAM_Y2_PIO_BASE = 6;
 const uint8_t CMD_REG_WRITE = 0xAA;
 const uint8_t CMD_REG_READ = 0xBB;
 const uint8_t CMD_CAPTURE = 0xCC;
+const uint8_t CMD_STREAM = 0xDD;
 
 uint8_t image_buf[320*240*2];
 
@@ -76,6 +77,17 @@ int main() {
 		} else if (cmd == CMD_CAPTURE) {
 			ov7670_capture_frame(&config);
 			uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
+		} else if (cmd == CMD_STREAM) {
+			while (true) {
+				ov7670_capture_frame(&config);
+				uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
+				// 检查是否有停止命令
+				if (uart_is_readable(uart0)) {
+					uint8_t stop_cmd;
+					uart_read_blocking(uart0, &stop_cmd, 1);
+					if (stop_cmd == 0x00) break;
+				}
+			}
 		}
 	}
 
