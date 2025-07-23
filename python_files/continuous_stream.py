@@ -77,9 +77,6 @@ class OV7670ContinuousStream:
             # 水平翻转解决镜像问题
             rgb = np.fliplr(rgb)
             
-            # 旋转90度修正显示方向
-            # rgb = np.rot90(rgb, k=1)
-            
             return rgb
         except Exception as e:
             print(f"图像处理错误: {e}")
