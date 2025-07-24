@@ -70,13 +70,17 @@ void ov7670_capture_frame(struct ov7670_config *config) {
 		false
 	);
 
-	// Wait for vsync rising edge to start frame
-	while (gpio_get(config->pin_vsync) == true);
-	while (gpio_get(config->pin_vsync) == false);
-	// while (gpio_get(15) == true);
-	// while (gpio_get(15) == false);
-	// while (gpio_get(15) == true);
-	// while (gpio_get(15) == false);
+	// 改进的帧同步 - 等待稳定的VSYNC信号
+	// 等待VSYNC变为低电平（确保前一帧完全结束）
+	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+	sleep_us(1); // 短暂延时确保信号稳定
+	
+	// 等待VSYNC变为高电平（新帧开始）
+	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
+	sleep_us(1); // 短暂延时确保信号稳定
+	
+	// 再次确认VSYNC保持高电平（确保帧稳定开始）
+	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
 
 	dma_channel_start(config->dma_channel);
 	dma_channel_wait_for_finish_blocking(config->dma_channel);

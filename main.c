@@ -80,6 +80,10 @@ int main() {
 		} else if (cmd == CMD_STREAM) {
 			while (true) {
 				ov7670_capture_frame(&config);
+				// 添加帧开始标记，便于接收端同步
+				const uint8_t frame_start_marker[] = {0xFF, 0x00, 0xFF, 0x00};
+				uart_write_blocking(uart0, frame_start_marker, sizeof(frame_start_marker));
+				
 				// 添加调试输出
 				printf("发送图像数据: %d字节\n", config.image_buf_size);
 				// 分块发送数据(每256字节)

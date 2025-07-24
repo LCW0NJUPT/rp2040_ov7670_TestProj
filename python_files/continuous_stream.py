@@ -52,7 +52,25 @@ class OV7670ContinuousStream:
     def get_frame(self):
         """高效获取一帧数据"""
         expected_size = self.width * self.height * 2
-        # 确保读取完整帧数据
+        
+        # 查找帧开始标记
+        marker = b'\xFF\x00\xFF\x00'
+        buffer = b''
+        
+        # 读取数据直到找到帧开始标记
+        while len(buffer) < len(marker):
+            byte = self.ser.read(1)
+            if not byte:
+                return None
+            buffer += byte
+            
+        while buffer[-len(marker):] != marker:
+            byte = self.ser.read(1)
+            if not byte:
+                return None
+            buffer += byte
+            
+        # 找到标记后，读取完整帧数据
         raw = bytearray()
         while len(raw) < expected_size:
             chunk = self.ser.read(expected_size - len(raw))
