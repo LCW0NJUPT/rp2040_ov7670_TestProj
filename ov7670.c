@@ -56,6 +56,37 @@ void ov7670_init(struct ov7670_config *config) {
 }
 
 void ov7670_capture_frame(struct ov7670_config *config) {
+	// 丢弃前几帧以解决图像撕裂问题
+	static bool is_first_capture = true;
+	if (is_first_capture) {
+		// 预热阶段 - 丢弃前3帧
+		for (int i = 0; i < 3; i++) {
+			dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
+			channel_config_set_read_increment(&c, false);
+			channel_config_set_write_increment(&c, true);
+			channel_config_set_dreq(&c, pio_get_dreq(config->pio, config->pio_sm, false));
+			channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+			
+			dma_channel_configure(
+				config->dma_channel, &c,
+				config->image_buf,  // 临时使用主缓冲区
+				&config->pio->rxf[config->pio_sm],
+				config->image_buf_size,
+				false
+			);
+
+			// 等待完整的VSYNC信号周期
+			while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+			while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
+			while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+
+			dma_channel_start(config->dma_channel);
+			dma_channel_wait_for_finish_blocking(config->dma_channel);
+		}
+		is_first_capture = false;
+	}
+	
+	// 捕获最终帧
 	dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
 	channel_config_set_read_increment(&c, false);
 	channel_config_set_write_increment(&c, true);
@@ -70,18 +101,10 @@ void ov7670_capture_frame(struct ov7670_config *config) {
 		false
 	);
 
-	// 改进的帧同步 - 等待完整的VSYNC信号周期
-	// 等待VSYNC变为低电平（确保前一帧完全结束）
+	// 等待完整的VSYNC信号周期
 	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-	
-	// 等待VSYNC变为高电平（新帧开始）
 	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
-	
-	// 等待VSYNC变回低电平（确保场同步信号完整）
 	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-	
-	// 短暂延时确保信号稳定后再开始采集
-	// sleep_us(1);
 
 	dma_channel_start(config->dma_channel);
 	dma_channel_wait_for_finish_blocking(config->dma_channel);

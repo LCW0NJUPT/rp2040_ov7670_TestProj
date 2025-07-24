@@ -84,14 +84,8 @@ int main() {
 				const uint8_t frame_start_marker[] = {0xFF, 0x00, 0xFF, 0x00};
 				uart_write_blocking(uart0, frame_start_marker, sizeof(frame_start_marker));
 				
-				// 添加调试输出
-				printf("发送图像数据: %d字节\n", config.image_buf_size);
-				// 分块发送数据(每256字节)
-				uart_tx_wait_blocking(uart0);
-				for(int i=0; i<config.image_buf_size; i+=256) {
-					int chunk_size = (config.image_buf_size-i) > 256 ? 256 : (config.image_buf_size-i);
-					uart_write_blocking(uart0, config.image_buf+i, chunk_size);
-				}
+				// 直接发送整帧数据，提高传输效率
+				uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
 				
 				// 非阻塞检查停止命令
 				if (uart_is_readable_within_us(uart0, 100)) {
