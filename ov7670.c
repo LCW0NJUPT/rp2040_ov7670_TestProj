@@ -73,14 +73,12 @@ void ov7670_capture_frame(struct ov7670_config *config) {
 	// 改进的帧同步 - 等待完整的VSYNC信号周期
 	// 等待VSYNC变为低电平（确保前一帧完全结束）
 	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-	// sleep_us(1); // 短暂延时确保信号稳定
 	
 	// 等待VSYNC变为高电平（新帧开始）
 	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
-	// sleep_us(1); // 短暂延时确保信号稳定
 	
 	// 等待VSYNC变回低电平（确保场同步信号完整）
-	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
+	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
 	
 	// 短暂延时确保信号稳定后再开始采集
 	// sleep_us(1);
