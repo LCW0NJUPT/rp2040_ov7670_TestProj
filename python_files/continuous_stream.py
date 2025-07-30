@@ -34,7 +34,7 @@ class OV7670ContinuousStream:
         self.lut_g = np.array([(x * 255) // 63 for x in range(64)], dtype=np.uint8)
         self.lut_b = np.array([(x * 255) // 31 for x in range(32)], dtype=np.uint8)
         
-        # 初始化串口
+        # 初始化串口，提高波特率以匹配设备端
         self.ser = serial.Serial(
             port=port,
             baudrate=1500000,
@@ -73,7 +73,8 @@ class OV7670ContinuousStream:
         # 找到标记后，读取完整帧数据
         raw = bytearray()
         while len(raw) < expected_size:
-            chunk = self.ser.read(expected_size - len(raw))
+            # 增加单次读取数据量以提高效率
+            chunk = self.ser.read(min(expected_size - len(raw), 8192))
             if not chunk:
                 print(f"警告: 只收到 {len(raw)}/{expected_size} 字节")
                 return None

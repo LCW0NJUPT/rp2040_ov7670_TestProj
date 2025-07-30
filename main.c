@@ -24,6 +24,7 @@ int main() {
 	vreg_set_voltage(VREG_VOLTAGE_MAX);
     set_sys_clock_khz(120*1000, true);
 	stdio_uart_init();
+	// 提高波特率以加快数据传输速度
 	uart_set_baudrate(uart0, 1500000);
 	printf("\n\nBooted!\n");
 	gpio_init(PIN_LED);
@@ -78,6 +79,7 @@ int main() {
 			ov7670_capture_frame(&config);
 			uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
 		} else if (cmd == CMD_STREAM) {
+			int frame_count = 0;
 			while (true) {
 				ov7670_capture_frame(&config);
 				// 添加帧开始标记，便于接收端同步
@@ -87,11 +89,15 @@ int main() {
 				// 直接发送整帧数据，提高传输效率
 				uart_write_blocking(uart0, config.image_buf, config.image_buf_size);
 				
-				// 非阻塞检查停止命令
-				if (uart_is_readable_within_us(uart0, 100)) {
-					uint8_t stop_cmd;
-					uart_read_blocking(uart0, &stop_cmd, 1);
-					if (stop_cmd == 0x00) break;
+				// 减少停止命令检查频率以提高帧率
+				frame_count++;
+				if (frame_count >= 5) { // 每5帧检查一次停止命令
+					frame_count = 0;
+					if (uart_is_readable_within_us(uart0, 100)) {
+						uint8_t stop_cmd;
+						uart_read_blocking(uart0, &stop_cmd, 1);
+						if (stop_cmd == 0x00) break;
+					}
 				}
 			}
 		}

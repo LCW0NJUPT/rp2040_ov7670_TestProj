@@ -56,10 +56,10 @@ void ov7670_init(struct ov7670_config *config) {
 }
 
 void ov7670_capture_frame(struct ov7670_config *config) {
-	// 丢弃前几帧以解决图像撕裂问题
+	// 只在第一次捕获时丢弃前几帧以解决图像撕裂问题，之后不再丢帧以提高帧率
 	static bool is_first_capture = true;
 	if (is_first_capture) {
-		// 预热阶段 - 丢弃前3帧
+		// 预热阶段 - 仅丢弃前3帧
 		for (int i = 0; i < 3; i++) {
 			dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
 			channel_config_set_read_increment(&c, false);
@@ -78,7 +78,8 @@ void ov7670_capture_frame(struct ov7670_config *config) {
 			// 等待完整的VSYNC信号周期
 			while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
 			while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
-			while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+			// while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+			// while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
 
 			dma_channel_start(config->dma_channel);
 			dma_channel_wait_for_finish_blocking(config->dma_channel);
@@ -101,10 +102,11 @@ void ov7670_capture_frame(struct ov7670_config *config) {
 		false
 	);
 
-	// 等待完整的VSYNC信号周期
+	// 等待完整的VSYNC信号周期（优化：只等待下降沿和上升沿）
 	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
 	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
-	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+	// while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+	// while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
 
 	dma_channel_start(config->dma_channel);
 	dma_channel_wait_for_finish_blocking(config->dma_channel);
