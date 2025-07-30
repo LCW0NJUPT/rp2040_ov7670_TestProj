@@ -11,7 +11,7 @@ const int PIN_CAM_SIOD = 4; // I2C0 SDA
 const int PIN_CAM_RESETB = 17;
 const int PIN_CAM_XCLK = 3;
 const int PIN_CAM_VSYNC = 16;
-const int PIN_CAM_Y2_PIO_BASE = 6;
+const int PIN_CAM_Y2_PIO_BASE = 6;  //base定义为GPIO6，在PIO中会用到这个定义，这种方式允许开发者在不修改PIO程序的情况下更改引脚连接，只需要调整pin_base参数即可。
 
 const uint8_t CMD_REG_WRITE = 0xAA;
 const uint8_t CMD_REG_READ = 0xBB;

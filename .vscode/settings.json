@@ -42,6 +42,7 @@
         "ov7670.h": "c",
         "stdint.h": "c",
         "vreg.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "random": "cpp"
     }
 }

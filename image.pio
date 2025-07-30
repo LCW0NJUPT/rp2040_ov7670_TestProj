@@ -1,20 +1,21 @@
 .program image
 .wrap_target
-	wait 1 pin 9 // wait for hsync
-	wait 1 pin 8 // wait for rising pclk
-	in pins 8
-	wait 0 pin 8
+	wait 1 pin 9 // 等待HSYNC (实际上是相对于基地址的引脚9，即GPIO6+9=GPIO15)
+	wait 1 pin 8 // 等待PCLK上升沿 (实际上是相对于基地址的引脚8，即GPIO6+8=GPIO14)
+	in pins 8   // 读取8位数据 (从GPIO6-GPIO13)
+	wait 0 pin 8   // 等待PCLK下降沿 (GPIO14)
 .wrap
 
 % c-sdk {
 void image_program_init(PIO pio, uint sm, uint offset, uint pin_base) {
-	pio_sm_set_consecutive_pindirs(pio, sm, pin_base, 10, false);
+	pio_sm_set_consecutive_pindirs(pio, sm, pin_base, 10, false);  //将从 [pin_base] 开始的 10 个引脚设置为输入模式
 
-	pio_sm_config c = image_program_get_default_config(offset);
-	sm_config_set_in_pins(&c, pin_base);
-	sm_config_set_in_shift(&c, false, true, 8);
-	sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);
+	pio_sm_config c = image_program_get_default_config(offset);  //获取 PIO 程序默认配置
+	sm_config_set_in_pins(&c, pin_base);  //设置输入引脚的基地址
+	sm_config_set_in_shift(&c, false, true, 8);  //配置输入移位方向（从右到左），自动推送，8 位宽度
+	sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX);  //将 TX 和 RX FIFO 合并为一个大的 RX FIFO
 
+	//初始化并启用状态机
 	pio_sm_init(pio, sm, offset, &c);
 	pio_sm_set_enabled(pio, sm, true);
 }
