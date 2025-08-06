@@ -29,6 +29,7 @@ pico_sdk_init()
 add_executable(rp2040_ov7670_TestProj
 	ov7670.c
 	main.c
+	st7789.c
 )
 
 pico_generate_pio_header(rp2040_ov7670_TestProj ${CMAKE_CURRENT_LIST_DIR}/image.pio)
@@ -39,6 +40,7 @@ target_link_libraries(rp2040_ov7670_TestProj
 	hardware_i2c
 	hardware_pio
 	hardware_pwm
+	hardware_spi
 )
 
 
