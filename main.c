@@ -25,7 +25,7 @@ void process_and_display_frame(struct ov7670_config *config) {
     const uint32_t total_pixels = 320 * 240;
     
     // 采样部分像素来判断是否为黑屏
-    for (uint32_t i = 0; i < total_pixels; i += 100) { // 每100个像素采样一次以提高性能
+    for (uint32_t i = 0; i < total_pixels; i += 200) { // 每200个像素采样一次以提高性能
         uint16_t pixel = pixels[i];
         // 提取RGB分量计算亮度 (RGB565)
         uint8_t r = (pixel >> 11) & 0x1F;
@@ -80,7 +80,7 @@ int main() {
     gpio_put(PIN_BL, 1); // 打开背光（高电平）
 
     // 初始化 SPI
-    spi_init(spi, 40 * 1000 * 1000); // 40 MHz
+    spi_init(spi, 50 * 1000 * 1000); // 50 MHz
     spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // 将 SCK、MOSI 复用为 SPI 功能
@@ -125,9 +125,9 @@ int main() {
         ov7670_capture_frame(&config);
         process_and_display_frame(&config);
         
-        // 每5帧检查一次停止命令
+        // 每10帧检查一次停止命令
         frame_count++;
-        if (frame_count >= 5) {
+        if (frame_count >= 10) {
             frame_count = 0;
             if (uart_is_readable_within_us(uart0, 100)) {
                 uint8_t stop_cmd;
@@ -139,8 +139,12 @@ int main() {
             }
         }
         
-        // LED指示灯闪烁表示程序运行中
-        gpio_put(PIN_LED, !gpio_get(PIN_LED));
+        // LED指示灯闪烁表示程序运行中（降低频率）
+        static uint32_t led_toggle_counter = 0;
+        led_toggle_counter++;
+        if (led_toggle_counter % 5 == 0) { // 每5帧闪烁一次LED（降低LED切换频率）
+            gpio_put(PIN_LED, !gpio_get(PIN_LED));
+        }
     }
     
     // 如果退出了流模式，显示提示信息
@@ -161,9 +165,9 @@ int main() {
                 ov7670_capture_frame(&config);
                 process_and_display_frame(&config);
                 
-                // 每5帧检查一次停止命令
+                // 每10帧检查一次停止命令
                 frame_count++;
-                if (frame_count >= 5) {
+                if (frame_count >= 10) {
                     frame_count = 0;
                     if (uart_is_readable_within_us(uart0, 100)) {
                         uint8_t stop_cmd;
@@ -175,8 +179,12 @@ int main() {
                     }
                 }
                 
-                // LED指示灯闪烁表示程序运行中
-                gpio_put(PIN_LED, !gpio_get(PIN_LED));
+                // LED指示灯闪烁表示程序运行中（降低频率）
+                static uint32_t led_toggle_counter = 0;
+                led_toggle_counter++;
+                if (led_toggle_counter % 5 == 0) { // 每5帧闪烁一次LED（降低LED切换频率）
+                    gpio_put(PIN_LED, !gpio_get(PIN_LED));
+                }
             }
             
             // 重新显示停止状态

@@ -155,8 +155,9 @@ void st7789_init(void)
     // 4. Set MADCTL (旋转 + 颜色顺序)
     st7789_set_madctl();
 
-    // 5. (可选) 颜色反转，如果需要
-    st7789_write_cmd(0x21); // INVON
+    // 5. (可选) 颜色反转，如果需要 
+    st7789_write_cmd(0x21); 
+    st7789_write_cmd(0x13); // 标准伽马曲线以改善色彩质量
 
     // 6. 打开显示
     st7789_write_cmd(0x29);   // DISPON

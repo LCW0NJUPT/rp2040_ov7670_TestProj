@@ -59,8 +59,8 @@ void ov7670_capture_frame(struct ov7670_config *config) {
 	// 只在第一次捕获时丢弃前几帧以解决图像撕裂问题，之后不再丢帧以提高帧率
 	static bool is_first_capture = true;
 	if (is_first_capture) {
-		// 预热阶段 - 仅丢弃前3帧
-		for (int i = 0; i < 3; i++) {
+		// 预热阶段 - 仅丢弃前1帧（从3帧减少到1帧）
+		for (int i = 0; i < 1; i++) {
 			dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
 			channel_config_set_read_increment(&c, false);
 			channel_config_set_write_increment(&c, true);
