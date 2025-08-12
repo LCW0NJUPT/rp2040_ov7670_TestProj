@@ -125,19 +125,6 @@ int main() {
         ov7670_capture_frame(&config);
         process_and_display_frame(&config);
         
-        // 每10帧检查一次停止命令
-        frame_count++;
-        if (frame_count >= 10) {
-            frame_count = 0;
-            if (uart_is_readable_within_us(uart0, 100)) {
-                uint8_t stop_cmd;
-                uart_read_blocking(uart0, &stop_cmd, 1);
-                if (stop_cmd == 0x00) {
-                    printf("Stop command received\n");
-                    break;
-                }
-            }
-        }
         
         // LED指示灯闪烁表示程序运行中（降低频率）
         static uint32_t led_toggle_counter = 0;
@@ -147,51 +134,6 @@ int main() {
         }
     }
     
-    // 如果退出了流模式，显示提示信息
-    st7789_fill_color(0xF800); // 填充红色表示已停止
-    printf("Stream stopped. Send any character to restart.\n");
-    
-    // 等待任意字符重启流模式
-    while (true) {
-        if (uart_is_readable_within_us(uart0, 1000)) {
-            uint8_t dummy;
-            uart_read_blocking(uart0, &dummy, 1);
-            printf("Restarting stream...\n");
-            st7789_fill_color(0x001F); // 恢复蓝色背景
-            frame_count = 0;
-            
-            // 重新进入流模式
-            while (true) {
-                ov7670_capture_frame(&config);
-                process_and_display_frame(&config);
-                
-                // 每10帧检查一次停止命令
-                frame_count++;
-                if (frame_count >= 10) {
-                    frame_count = 0;
-                    if (uart_is_readable_within_us(uart0, 100)) {
-                        uint8_t stop_cmd;
-                        uart_read_blocking(uart0, &stop_cmd, 1);
-                        if (stop_cmd == 0x00) {
-                            printf("Stop command received\n");
-                            break;
-                        }
-                    }
-                }
-                
-                // LED指示灯闪烁表示程序运行中（降低频率）
-                static uint32_t led_toggle_counter = 0;
-                led_toggle_counter++;
-                if (led_toggle_counter % 5 == 0) { // 每5帧闪烁一次LED（降低LED切换频率）
-                    gpio_put(PIN_LED, !gpio_get(PIN_LED));
-                }
-            }
-            
-            // 重新显示停止状态
-            st7789_fill_color(0xF800); // 填充红色表示已停止
-            printf("Stream stopped. Send any character to restart.\n");
-        }
-    }
 
     return 0;
 }
