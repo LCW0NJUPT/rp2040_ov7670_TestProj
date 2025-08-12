@@ -180,8 +180,28 @@ void st7789_draw_image(uint16_t x, uint16_t y, uint16_t width, uint16_t height, 
     cs_select();
     dc_data();
     
-    // 发送图像数据
-    spi_write_blocking(spi, (const uint8_t*)image, width * height * 2);
+    // 发送图像数据，需要调整字节顺序以匹配Python端的显示效果
+    // Python端使用的是大端格式，而RP2040默认是小端格式
+    const uint8_t *image_bytes = (const uint8_t*)image;
+    uint32_t total_bytes = width * height * 2;
+    
+    // 创建临时缓冲区来存储字节交换后的数据
+    uint8_t buffer[1024];
+    uint32_t sent = 0;
+    
+    while (sent < total_bytes) {
+        uint32_t chunk_size = (total_bytes - sent) > sizeof(buffer) ? sizeof(buffer) : (total_bytes - sent);
+        chunk_size &= ~1; // 确保是偶数大小
+        
+        // 交换字节顺序
+        for (uint32_t i = 0; i < chunk_size; i += 2) {
+            buffer[i] = image_bytes[sent + i + 1];     // 先发送高字节
+            buffer[i + 1] = image_bytes[sent + i];     // 后发送低字节
+        }
+        
+        spi_write_blocking(spi, buffer, chunk_size);
+        sent += chunk_size;
+    }
     
     cs_deselect();
 }
