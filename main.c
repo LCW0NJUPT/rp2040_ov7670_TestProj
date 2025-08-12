@@ -21,7 +21,7 @@ int main() {
     set_sys_clock_khz(120*1000, true);
     stdio_uart_init();
     // 提高波特率以加快数据传输速度
-    uart_set_baudrate(uart0, 1500000);
+    uart_set_baudrate(uart0, 115200);
     printf("\n\nBooted!\n");
     
     gpio_init(PIN_LED);
