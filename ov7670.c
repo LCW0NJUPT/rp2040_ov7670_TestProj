@@ -24,7 +24,7 @@ void ov7670_init(struct ov7670_config *config) {
     // PWM占空比设置为2（50%）
 	pwm_set_gpio_level(config->pin_xclk, 2);
 	pwm_set_enabled(slice_num, true);
-	printf("XCLK generation (~20.83 MHz).\n");
+	printf("XCLK generation (24 MHz).\n");
 
 	// SCCB I2C @ 100 kHz
 	gpio_set_function(config->pin_sioc, GPIO_FUNC_I2C);
