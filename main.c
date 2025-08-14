@@ -1,18 +1,10 @@
 #include <stdio.h>
 #include "ov7670.h"
 #include "st7789.h"
+#include "pin_definitions.h"
 #include "pico/stdlib.h"
 #include "hardware/vreg.h"
 #include "hardware/clocks.h"
-
-const int PIN_LED = 25;
-
-const int PIN_CAM_SIOC = 21; // I2C0 SCL
-const int PIN_CAM_SIOD = 4; // I2C0 SDA
-const int PIN_CAM_RESETB = 17;
-const int PIN_CAM_XCLK = 3;
-const int PIN_CAM_VSYNC = 16;
-const int PIN_CAM_Y2_PIO_BASE = 6;  //base定义为GPIO6，在PIO中会用到这个定义，这种方式允许开发者在不修改PIO程序的情况下更改引脚连接，只需要调整pin_base参数即可。
 
 uint8_t image_buf[320*240*2];
 
@@ -70,25 +62,10 @@ int main() {
     st7789_fill_color(0x001F);
     
     struct ov7670_config config;
-    config.sccb = i2c0;
-    config.pin_sioc = PIN_CAM_SIOC;
-    config.pin_siod = PIN_CAM_SIOD;
-
-    config.pin_resetb = PIN_CAM_RESETB;
-    config.pin_xclk = PIN_CAM_XCLK;
-    config.pin_vsync = PIN_CAM_VSYNC;
-    config.pin_y2_pio_base = PIN_CAM_Y2_PIO_BASE;
-
-    config.pio = pio0;
-    config.pio_sm = 0;
-
-    config.dma_channel = 0;
-    config.image_buf = image_buf;
-    config.image_buf_size = sizeof(image_buf);
-    printf("config.\n");
-
-    ov7670_init(&config);
+    ov7670_configure(&config);
     printf("OV7670_init.\n");
+    
+    // 读取设备ID
     uint8_t midh = ov7670_reg_read(&config, 0x1C);
     uint8_t midl = ov7670_reg_read(&config, 0x1D);
     printf("MIDH = 0x%02x, MIDL = 0x%02x\n", midh, midl);

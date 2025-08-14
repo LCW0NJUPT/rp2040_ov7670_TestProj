@@ -1,4 +1,5 @@
 #include "st7789.h"
+#include "pin_definitions.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 

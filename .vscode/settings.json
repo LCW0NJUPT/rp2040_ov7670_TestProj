@@ -43,6 +43,7 @@
         "stdint.h": "c",
         "vreg.h": "c",
         "stdlib.h": "c",
-        "random": "cpp"
+        "random": "cpp",
+        "cstdint": "c"
     }
 }

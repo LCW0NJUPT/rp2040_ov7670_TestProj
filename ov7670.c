@@ -1,11 +1,15 @@
 #include "ov7670.h"
 #include "ov7670_init.h"
-#include "pico/stdlib.h"
-#include "hardware/dma.h"
-#include "hardware/i2c.h"
-#include "hardware/pwm.h"
+#include "pin_definitions.h"
 #include "image.pio.h"
 #include <stdio.h>
+#include "pico/stdlib.h"
+#include "hardware/pio.h"
+#include "hardware/i2c.h"
+#include "hardware/dma.h"
+#include "hardware/pwm.h"
+
+extern uint8_t image_buf[320*240*2];
 
 static const uint8_t OV7670_ADDR = 0x42 >> 1;
 
@@ -53,6 +57,26 @@ void ov7670_init(struct ov7670_config *config) {
 	uint offset = pio_add_program(config->pio, &image_program);
 	image_program_init(config->pio, config->pio_sm, offset, config->pin_y2_pio_base);
 	printf("Enable image RX PIO.\n");
+}
+
+// 封装OV7670配置过程的函数
+void ov7670_configure(struct ov7670_config *config) {
+    config->pin_xclk = 3;
+    config->pin_vsync = 16;
+    config->pin_resetb = 17;
+    config->pin_y2_pio_base = 6;
+    config->pin_sioc = 21;
+    config->pin_siod = 4;
+    
+    config->sccb = i2c0;
+    config->pio = pio0;
+    config->pio_sm = 0;
+
+    config->dma_channel = 0;
+    config->image_buf = image_buf;
+    config->image_buf_size = sizeof(image_buf);
+    
+    ov7670_init(config);
 }
 
 void ov7670_capture_frame(struct ov7670_config *config) {

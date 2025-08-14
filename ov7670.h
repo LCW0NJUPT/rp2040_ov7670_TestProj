@@ -25,6 +25,7 @@ struct ov7670_config {
 };
 
 void ov7670_init(struct ov7670_config *config);
+void ov7670_configure(struct ov7670_config *config);
 
 void ov7670_capture_frame(struct ov7670_config *config);
 
