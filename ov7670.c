@@ -56,60 +56,58 @@ void ov7670_init(struct ov7670_config *config) {
 }
 
 void ov7670_capture_frame(struct ov7670_config *config) {
-	// 只在第一次捕获时丢弃前几帧以解决图像撕裂问题，之后不再丢帧以提高帧率
-	static bool is_first_capture = true;
-	if (is_first_capture) {
-		// 预热阶段 - 仅丢弃前1帧（从3帧减少到1帧）
-		for (int i = 0; i < 1; i++) {
-			dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
-			channel_config_set_read_increment(&c, false);
-			channel_config_set_write_increment(&c, true);
-			channel_config_set_dreq(&c, pio_get_dreq(config->pio, config->pio_sm, false));
-			channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-			
-			dma_channel_configure(
-				config->dma_channel, &c,
-				config->image_buf,  // 临时使用主缓冲区
-				&config->pio->rxf[config->pio_sm],
-				config->image_buf_size,
-				false
-			);
+    // 只在第一次捕获时丢弃前几帧以解决图像撕裂问题，之后不再丢帧以提高帧率
+    static bool is_first_capture = true;
+    if (is_first_capture) {
+        // 预热阶段 - 丢弃前几帧以确保图像稳定
+        // 根据注释，从丢弃3帧减少到丢弃1帧
+        const int warmup_frames = 1;
+        for (int i = 0; i < warmup_frames; i++) {
+            dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
+            channel_config_set_read_increment(&c, false);
+            channel_config_set_write_increment(&c, true);
+            channel_config_set_dreq(&c, pio_get_dreq(config->pio, config->pio_sm, false));
+            channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+            
+            dma_channel_configure(
+                config->dma_channel, &c,
+                config->image_buf,  // 临时使用主缓冲区
+                &config->pio->rxf[config->pio_sm],
+                config->image_buf_size,
+                false
+            );
 
-			// 等待完整的VSYNC信号周期
-			while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-			while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
-			// while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-			// while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
+            // 等待完整的VSYNC信号周期
+            while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+            while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
 
-			dma_channel_start(config->dma_channel);
-			dma_channel_wait_for_finish_blocking(config->dma_channel);
-		}
-		is_first_capture = false;
-	}
-	
-	// 捕获最终帧
-	dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
-	channel_config_set_read_increment(&c, false);
-	channel_config_set_write_increment(&c, true);
-	channel_config_set_dreq(&c, pio_get_dreq(config->pio, config->pio_sm, false));
-	channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-	
-	dma_channel_configure(
-		config->dma_channel, &c,
-		config->image_buf,
-		&config->pio->rxf[config->pio_sm],
-		config->image_buf_size,
-		false
-	);
+            dma_channel_start(config->dma_channel);
+            dma_channel_wait_for_finish_blocking(config->dma_channel);
+        }
+        is_first_capture = false;
+    }
+    
+    // 捕获最终帧
+    dma_channel_config c = dma_channel_get_default_config(config->dma_channel);
+    channel_config_set_read_increment(&c, false);
+    channel_config_set_write_increment(&c, true);
+    channel_config_set_dreq(&c, pio_get_dreq(config->pio, config->pio_sm, false));
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    
+    dma_channel_configure(
+        config->dma_channel, &c,
+        config->image_buf,
+        &config->pio->rxf[config->pio_sm],
+        config->image_buf_size,
+        false
+    );
 
-	// 等待完整的VSYNC信号周期（优化：只等待下降沿和上升沿）
-	while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-	while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
-	// while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
-	// while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
+    // 等待完整的VSYNC信号周期以确保捕获完整帧
+    while (gpio_get(config->pin_vsync) == true) tight_loop_contents();
+    while (gpio_get(config->pin_vsync) == false) tight_loop_contents();
 
-	dma_channel_start(config->dma_channel);
-	dma_channel_wait_for_finish_blocking(config->dma_channel);
+    dma_channel_start(config->dma_channel);
+    dma_channel_wait_for_finish_blocking(config->dma_channel);
 }
 
 void ov7670_reg_write(struct ov7670_config *config, uint8_t reg, uint8_t value) {

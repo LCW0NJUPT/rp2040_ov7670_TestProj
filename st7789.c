@@ -181,27 +181,32 @@ void st7789_draw_image(uint16_t x, uint16_t y, uint16_t width, uint16_t height, 
     cs_select();
     dc_data();
     
-    // 发送图像数据，需要调整字节顺序以匹配Python端的显示效果
-    // Python端使用的是大端格式，而RP2040默认是小端格式
-    const uint8_t *image_bytes = (const uint8_t*)image;
-    uint32_t total_bytes = width * height * 2;
+    // 直接发送图像数据，使用uint16_t指针避免手动字节交换
+    // RP2040是小端系统，而ST7789需要大端格式的RGB565数据
+    // 通过逐个发送16位值并交换字节来实现正确格式
+    const uint16_t *pixels = image;
+    uint32_t total_pixels = (uint32_t)width * height;
     
-    // 创建临时缓冲区来存储字节交换后的数据
-    uint8_t buffer[1024];
-    uint32_t sent = 0;
+    // 使用较小的缓冲区逐批处理，减少函数调用次数
+    uint16_t buffer[64];  // 一次处理64个像素
+    uint32_t pixels_sent = 0;
     
-    while (sent < total_bytes) {
-        uint32_t chunk_size = (total_bytes - sent) > sizeof(buffer) ? sizeof(buffer) : (total_bytes - sent);
-        chunk_size &= ~1; // 确保是偶数大小
-        
-        // 交换字节顺序
-        for (uint32_t i = 0; i < chunk_size; i += 2) {
-            buffer[i] = image_bytes[sent + i + 1];     // 先发送高字节
-            buffer[i + 1] = image_bytes[sent + i];     // 后发送低字节
+    while (pixels_sent < total_pixels) {
+        uint32_t chunk_size = total_pixels - pixels_sent;
+        if (chunk_size > 64) {
+            chunk_size = 64;
         }
         
-        spi_write_blocking(spi, buffer, chunk_size);
-        sent += chunk_size;
+        // 复制并交换字节序
+        for (uint32_t i = 0; i < chunk_size; i++) {
+            uint16_t pixel = pixels[pixels_sent + i];
+            // 交换字节序：将little-endian转换为big-endian
+            buffer[i] = ((pixel & 0xFF) << 8) | (pixel >> 8);
+        }
+        
+        // 发送这一批数据
+        spi_write_blocking(spi, (const uint8_t*)buffer, chunk_size * 2);
+        pixels_sent += chunk_size;
     }
     
     cs_deselect();
