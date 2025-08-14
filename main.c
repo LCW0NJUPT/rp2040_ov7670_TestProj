@@ -72,11 +72,28 @@ int main() {
 
     // 自动启动流模式
     printf("Starting video stream mode automatically\n");
-    int frame_count = 0;
+    
+    // 帧率测量相关变量
+    uint32_t frame_count = 0;
+    uint32_t last_time = to_ms_since_boot(get_absolute_time());
+    uint32_t current_time = last_time;
+    
     while (true) {
         ov7670_capture_frame(&config);
         process_and_display_frame(&config);
         
+        frame_count++;
+        
+        // 每100帧计算一次帧率
+        if (frame_count % 100 == 0) {
+            current_time = to_ms_since_boot(get_absolute_time());
+            uint32_t elapsed_time = current_time - last_time;
+            if (elapsed_time > 0) {
+                float fps = (100.0f * 1000.0f) / (float)elapsed_time;
+                printf("Frame rate: %.2f fps\n", fps);
+            }
+            last_time = current_time;
+        }
         
         // LED指示灯闪烁表示程序运行中（降低频率）
         static uint32_t led_toggle_counter = 0;

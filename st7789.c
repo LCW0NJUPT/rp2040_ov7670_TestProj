@@ -1,5 +1,6 @@
 #include "st7789.h"
 #include "pin_definitions.h"
+#include <stdio.h>
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 
@@ -156,8 +157,9 @@ void st7789_init(void)
     gpio_put(PIN_BL, 1); // 打开背光（高电平）
 
     // 初始化 SPI
-    spi_init(spi, 50 * 1000 * 1000); // 50 MHz
+    uint32_t spi_baudrate = spi_init(spi, 50 * 1000 * 1000); // 50 MHz
     spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    printf("SPI actual baudrate: %d Hz\n", spi_baudrate);
 
     // 将 SCK、MOSI 复用为 SPI 功能
     gpio_set_function(PIN_SCK,  GPIO_FUNC_SPI);
