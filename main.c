@@ -62,31 +62,6 @@ int main() {
     gpio_set_dir(PIN_LED, GPIO_OUT);
     printf("PIN_LED init.\n");
     
-    // 初始化ST7789显示屏
-    gpio_init(PIN_CS);
-    gpio_set_dir(PIN_CS, GPIO_OUT);
-    gpio_put(PIN_CS, 1); // CS idle high
-
-    gpio_init(PIN_DC);
-    gpio_set_dir(PIN_DC, GPIO_OUT);
-    gpio_put(PIN_DC, 0);
-
-    gpio_init(PIN_RST);
-    gpio_set_dir(PIN_RST, GPIO_OUT);
-    gpio_put(PIN_RST, 1); // 先不复位
-
-    gpio_init(PIN_BL);
-    gpio_set_dir(PIN_BL, GPIO_OUT);
-    gpio_put(PIN_BL, 1); // 打开背光（高电平）
-
-    // 初始化 SPI
-    spi_init(spi, 50 * 1000 * 1000); // 50 MHz
-    spi_set_format(spi, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-
-    // 将 SCK、MOSI 复用为 SPI 功能
-    gpio_set_function(PIN_SCK,  GPIO_FUNC_SPI);
-    gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
-    
     // 初始化显示屏
     st7789_init();
     printf("ST7789 init.\n");
