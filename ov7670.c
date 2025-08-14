@@ -14,11 +14,14 @@ extern uint8_t image_buf[320*240*2];
 static const uint8_t OV7670_ADDR = 0x42 >> 1;
 
 void ov7670_init(struct ov7670_config *config) {
-	// XCLK generation (~20.83 MHz)
+	// XCLK generation (~24 MHz)
+    // 将XCLK引脚（GPIO3）配置为PWM功能
 	gpio_set_function(config->pin_xclk, GPIO_FUNC_PWM);
 	uint slice_num = pwm_gpio_to_slice_num(config->pin_xclk);
-	// 6 cycles (0 to 5), 125 MHz / 6 = ~20.83 MHz wrap rate
+	// 5 cycles (0 to 4), 120 MHz / 5 = 24 MHz wrap rate
+    // PWM周期设置为4（即0-4，共5个计数周期）
 	pwm_set_wrap(slice_num, 4);
+    // PWM占空比设置为2（50%）
 	pwm_set_gpio_level(config->pin_xclk, 2);
 	pwm_set_enabled(slice_num, true);
 	printf("XCLK generation (~20.83 MHz).\n");
